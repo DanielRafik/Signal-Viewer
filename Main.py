@@ -9,7 +9,7 @@
 
 
 import imghdr
-from turtle import rt
+from turtle import pen, pencolor, rt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QInputDialog, QAction, QTextEdit, QFontDialog, QColorDialog
 from PyQt5.uic import loadUi
@@ -227,7 +227,6 @@ class Ui_MainWindow(object):
     def browsefiles(self):
         fname=QFileDialog.getOpenFileName(None, str("Browse Files"), None, str("Signal Files (*.mat)"))
         signal = scipy.io.loadmat(str(fname[0]))
-        print(signal.keys())
         xaxis=signal['val']
         xnew=np.array(xaxis)
         xnew=xnew.flatten()
@@ -235,7 +234,14 @@ class Ui_MainWindow(object):
         yaxis=signal['val']
         ynew=np.array(yaxis)
         ynew=ynew.flatten()
-        self.Figure_Widget.plot(xnewer, ynew)
+        currentcolor = str(self.SignalColor_ComboBox.currentText())
+        if currentcolor == 'Red':
+            pencolor = 'r'
+        elif currentcolor == 'Green':
+            pencolor = 'g'
+        elif currentcolor == 'Blue':
+            pencolor = 'b'
+        self.Figure_Widget.plot(xnewer, ynew, pen=pencolor)
 
         
 
