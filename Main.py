@@ -19,10 +19,13 @@ from PyQt5.QtCore import QFileInfo
 import sys
 from fpdf import FPDF
 import matplotlib
+from matplotlib.axis import XAxis, YAxis
 import pyqtgraph
 import numpy as np
 from collections import namedtuple
 import pyqtgraph.exporters
+import scipy.io
+import h5py
 
 
 
@@ -222,9 +225,19 @@ class Ui_MainWindow(object):
 
 
     def browsefiles(self):
-        fname=QFileDialog.getOpenFileName(None, str("Browse Files"), None, str("Signal Files (*.xml)"))
-        #print(fname[0])
-        self.lineEdit.setText(fname[0])
+        fname=QFileDialog.getOpenFileName(None, str("Browse Files"), None, str("Signal Files (*.mat)"))
+        signal = scipy.io.loadmat(str(fname[0]))
+        print(signal.keys())
+        xaxis=signal['val']
+        xnew=np.array(xaxis)
+        xnew=xnew.flatten()
+        xnewer=np.arange(1,len(xnew)+1,1)
+        yaxis=signal['val']
+        ynew=np.array(yaxis)
+        ynew=ynew.flatten()
+        self.Figure_Widget.plot(xnewer, ynew)
+
+        
 
     def exportfiles(self):
         pdfname=QFileDialog.getSaveFileName(None, str("Save PDF"), None, str("PDF Files (*.pdf)"))
@@ -242,14 +255,7 @@ class Ui_MainWindow(object):
                  pdf.output(str(pdfname[0]))
                
     def playbutton(self):
-        from scipy.misc import electrocardiogram
-        print('yarab')
-        ecg = electrocardiogram()
-        frequency = 360
-        # calculating time data with ecg size along with frequency
-        time_data = np.arange(ecg.size) / frequency
-        
-        self.Figure_Widget.plot(time_data, ecg)
+        print()
 
 
     def retranslateUi(self, MainWindow):
