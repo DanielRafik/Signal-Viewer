@@ -283,10 +283,10 @@ class Ui_MainWindow(object):
         if currentcolor == 'Red':
             pencolor = 'r'
         elif currentcolor == 'Green':
-            pencolor = 'g'
+            pencolor = 'g'      
         elif currentcolor == 'Blue':
             pencolor = 'b'
-        self.Figure_Widget.clear()
+        #self.Figure_Widget.clear()
         self.Figure_Widget.setYRange(np.min(self.y),np.max(self.y))
         if self.k == 0 :
             self.Figure_Widget.setXRange( 0  , self.scaling_factor )
