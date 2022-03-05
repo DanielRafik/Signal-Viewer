@@ -11,6 +11,7 @@
 from asyncio.windows_events import NULL
 import imghdr
 from turtle import pen, pencolor, rt
+#from typing_extensions import Self
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QInputDialog, QAction, QTextEdit, QFontDialog, QColorDialog, QGridLayout
 from PyQt5.uic import loadUi
@@ -23,6 +24,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import image
 from matplotlib.axis import XAxis, YAxis
+from pyparsing import ZeroOrMore
 import pyqtgraph
 import numpy as np
 from collections import namedtuple
@@ -33,7 +35,7 @@ import h5py
 import time
 from matplotlib.animation import FuncAnimation
 from random import randint
-
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -44,7 +46,7 @@ class Ui_MainWindow(object):
         self.scaling_factor_i= 0
         self.k = 0
         self.zoom = 1
-        self.fin = 700
+        self.fin = 1000
         self.size=0
         pyqtgraph.setConfigOptions(antialias=True)
         self.fig1 , self.ax = plt.subplots()
@@ -290,7 +292,7 @@ class Ui_MainWindow(object):
         self.Figure_Widget.setYRange(np.min(self.y),np.max(self.y))
         if self.k == 0 :
             self.Figure_Widget.setXRange( 0  , self.scaling_factor )
-        elif self.k >= 700 and self.status_slider == 0  :
+        elif self.k >= 700 :
             self.Figure_Widget.setXRange( self.scaling_factor_i  , self.scaling_factor )
             self.scaling_factor = self.scaling_factor + 10
             self.scaling_factor_i = self.scaling_factor_i + 10
@@ -298,8 +300,8 @@ class Ui_MainWindow(object):
             self.Figure_Widget.setXRange( (self.int + self.size ) , (self.fin +self.size) )
 
         self.plt = self.Figure_Widget.plot( self.x[0:self.k],self.y[0:self.k], pen=pencolor)
-        self.Figure_Slider.setMaximum(self.scaling_factor)
-        if self.status_zoom == 0 and  self.status_slider == 0  :
+        #self.Figure_Slider.setMaximum(self.scaling_factor)
+        if self.status_zoom == 0 :
             self.k = self.k +10
 
         print(self.k)
@@ -309,7 +311,13 @@ class Ui_MainWindow(object):
             self.scaling_factor = 700
             self.scaling_factor_i= 0
             self.zoom = 1
-
+    def valuechange(self):
+            self.status_slider = 1
+            if not self.filename == '':
+                self.timer.stop()
+                self.size = self.s1.value()
+                self.update_plot()
+    
 
     def pausebutton(self):
         self.timer.stop()
@@ -338,14 +346,15 @@ class Ui_MainWindow(object):
         self.update_plot() 
 
     def ZoomOut(self):
+        #print()
         self.timer.stop()
         self.size= 3
         self.status_zoom = 1
         self.status_slider =1
-        if self.zoom > 1 :
+        if self.zoom < 1 :
             self.zoom = self.zoom * 2
-            self.fin = self.fin * 2
-        elif self.zoom >=0.25 and self.zoom <= 1 :
+            self.fin = self.fin *2
+        elif self.zoom < 5 and self.zoom >= 1 :
             self.zoom = self.zoom * 2
             self.fin = self.fin * self.zoom
         self.update_plot()
@@ -385,6 +394,19 @@ class Ui_MainWindow(object):
                  
                
     def playbutton(self):
+        signal = scipy.io.loadmat(str(fname[0]))
+        xaxis=signal['val']
+        xnew=np.array(xaxis)
+        xnew=xnew.flatten()
+        xnewer=np.arange(1,len(xnew)+1,1)
+        yaxis=signal['val']
+        global ynew
+        ynew=np.array(yaxis)
+        ynew=ynew.flatten()
+        self.x = xnewer
+        self.y = ynew
+        self.status_zoom = 0
+        self.status_slider = 0
         self.update_plot()
         self.timer = QtCore.QTimer()
         self.timer.setInterval(100)
