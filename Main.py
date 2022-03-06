@@ -11,6 +11,7 @@
 from asyncio.windows_events import NULL
 import imghdr
 from turtle import pen, pencolor, rt
+from unittest import case
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QInputDialog, QAction, QTextEdit, QFontDialog, QColorDialog, QGridLayout
 from PyQt5.uic import loadUi
@@ -214,7 +215,7 @@ class Ui_MainWindow(object):
         self.comboBox_3.addItem("")
         self.comboBox_3.addItem("")
         self.comboBox_3.addItem("")
-        self.Spectrogram_Widget = PlotWidget(self.Spectrogram_GroupBox)
+        self.Spectrogram_Widget = pyqtgraph.GraphicsLayoutWidget(self.Spectrogram_GroupBox)
         self.Spectrogram_Widget.setGeometry(QtCore.QRect(0, 20, 381, 211))
         self.Spectrogram_Widget.setObjectName("Spectrogram_Widget")
         self.ZoomOut_PushButton = QtWidgets.QPushButton(self.centralwidget)
@@ -253,9 +254,11 @@ class Ui_MainWindow(object):
 
 
     def browsefiles(self):
-        global fname
-        fname=QFileDialog.getOpenFileName(None, str("Browse Files"), None, str("Signal Files (*.mat)"))
-        signal = scipy.io.loadmat(str(fname[0]))
+        global selected
+        selected = str(self.SelectChannel_ComboBox.currentText())
+        global fname1
+        fname1=QFileDialog.getOpenFileName(None, str("Browse Files"), None, str("Signal Files (*.mat)"))
+        signal = scipy.io.loadmat(str(fname1[0]))
         xaxis=signal['val']
         xnew=np.array(xaxis)
         xnew=xnew.flatten()
@@ -264,11 +267,12 @@ class Ui_MainWindow(object):
         global ynew
         ynew=np.array(yaxis)
         ynew=ynew.flatten()
-        self.x = xnewer
-        self.y = ynew
+        self.x1 = xnewer
+        self.y1 = ynew
         self.status_zoom = 0
         self.status_slider = 0
         self.update_plot()
+        self.spectrogram()
         self.timer = QtCore.QTimer()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.update_plot)
@@ -284,7 +288,7 @@ class Ui_MainWindow(object):
         elif currentcolor == 'Blue':
             pencolor = 'b'
         #self.Figure_Widget.clear()
-        self.Figure_Widget.setYRange(np.min(self.y),np.max(self.y))
+        self.Figure_Widget.setYRange(np.min(self.y1),np.max(self.y1))
         if self.k == 0 :
             self.Figure_Widget.setXRange(0, self.scaling_factor)
         elif self.k >= 600 and self.status_slider == 0  :
@@ -293,19 +297,17 @@ class Ui_MainWindow(object):
             self.scaling_factor_i = self.scaling_factor_i + 10 + int(speed/10)
         elif self.size > 0:
             self.Figure_Widget.setXRange((self.int + self.size) , (self.fin +self.size))
-        self.plt = self.Figure_Widget.plot(self.x[0:self.k], self.y[0:self.k], pen=pencolor)
+        self.plt1 = self.Figure_Widget.plot(self.x1[0:self.k], self.y1[0:self.k], pen=pencolor)
         self.Figure_Slider.setMaximum(self.scaling_factor)
         if self.status_zoom == 0 and self.status_slider == 0  :
             self.k = self.k + 10 + int(speed/10)
-        #print(speed)
-        #print(self.k)
-        if self.k > np.max(self.x):
+        if self.k > np.max(self.x1):
             self.timer.stop()
             self.k= 0
             self.scaling_factor = 600
             self.scaling_factor_i= 0
             self.zoom = 1
-
+        self.Check_Hidden()
 
     def pausebutton(self):
         self.timer.stop()
@@ -331,7 +333,8 @@ class Ui_MainWindow(object):
         elif self.zoom >=0.25 and self.zoom <= 1 :
             self.zoom = self.zoom / 2
             self.fin = self.fin * self.zoom
-        self.update_plot() 
+        self.update_plot()
+        
 
     def ZoomOut(self):
         self.timer.stop()
@@ -345,9 +348,23 @@ class Ui_MainWindow(object):
             self.zoom = self.zoom * 2
             self.fin = self.fin * self.zoom
         self.update_plot()
+        
     
    
-     
+    def Check_Hidden(self):
+        hidden1 = self.Channel1_CheckBox.isChecked()
+        hidden2 = self.Channel2_CheckBox.isChecked()
+        hidden3 = self.Channel3_CheckBox.isChecked()
+
+        if hidden1 == True:
+            self.Figure_Widget.clear()
+            self.pausebutton()
+        if hidden2 == True:
+            self.Figure_Widget.clear()
+            self.pausebutton()
+        if hidden3 == True:
+            self.Figure_Widget.clear()
+            self.pausebutton()
 
     def exportfiles(self):
         pdfname=QFileDialog.getSaveFileName(None, str("Save PDF"), None, str("PDF Files (*.pdf)"))
@@ -364,14 +381,29 @@ class Ui_MainWindow(object):
                  signalexporter.export('temp1.png')
                  pdf.image(str("temp1.png"))
                  pdf.cell(200, 10, txt = "Spectrogram", ln = 3, align = 'L')
-                 spectroexporter = pyqtgraph.exporters.ImageExporter(self.Figure_Widget.plotItem)
+                 spectroexporter = pyqtgraph.exporters.ImageExporter(self.Spectrogram_Widget.scene())
                  spectroexporter.parameters()['width'] = 300
                  spectroexporter.export('temp2.png')
-                 pdf.image(str("foo.png"))
+                 pdf.image(str("temp2.png"))
                  pdf.output(str(pdfname[0]))
     
     def spectrogram(self):
-        signal = scipy.io.loadmat(str(fname[0]))
+        self.Spectrogram_Widget.clear()
+        f, t, spectrogram = scipy.signal.spectrogram(self.y1)
+        p1 = self.Spectrogram_Widget.addPlot()
+        img = pyqtgraph.ImageItem()
+        p1.addItem(img)
+        hist = pyqtgraph.HistogramLUTItem()
+        hist.setImageItem(img)
+        hist.gradient.restoreState(
+        {'mode': 'rgb',
+         'ticks': [(0.5, (0, 255, 0, 255)),
+                   (1.0, (255, 0, 0, 255)),
+                   (0.0, (0, 0, 112, 255))]})
+        self.Spectrogram_Widget.addItem(hist)
+        hist.setLevels(np.min(spectrogram), np.max(spectrogram))
+        img.setImage(spectrogram)
+        img.scale(t[-1]/np.size(spectrogram, axis=1), f[-1]/np.size(spectrogram, axis=0))
         print("spectrogram on")
         speco = matplotlib.pyplot.specgram(ynew)
         plt.savefig('foo.png')
