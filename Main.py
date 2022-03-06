@@ -148,6 +148,7 @@ class Ui_MainWindow(object):
         self.BrowseFiles_PushButton.clicked.connect(self.browsefiles)
         self.BrowseFiles_PushButton.clicked.connect(self.spectrogram)
         self.CineSpeed_Slider = QtWidgets.QSlider(self.centralwidget)
+        self.CineSpeed_Slider.setValue(0)
         self.CineSpeed_Slider.setGeometry(QtCore.QRect(140, 380, 91, 22))
         self.CineSpeed_Slider.setOrientation(QtCore.Qt.Horizontal)
         self.CineSpeed_Slider.setObjectName("CineSpeed_Slider")
@@ -268,17 +269,13 @@ class Ui_MainWindow(object):
         self.status_zoom = 0
         self.status_slider = 0
         self.update_plot()
-        #self.plot_spectro()
         self.timer = QtCore.QTimer()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.update_plot)
         self.timer.start()
         
-        #self.Figure_Widget.plot(ynew, pen=pencolor)
-         
-        #fig = pyplot.plot(ynew)
-        
     def update_plot(self):
+        speed = int(self.CineSpeed_Slider.value())
         currentcolor = str(self.SignalColor_ComboBox.currentText())
         if currentcolor == 'Red':
             pencolor = 'r'
@@ -289,24 +286,23 @@ class Ui_MainWindow(object):
         #self.Figure_Widget.clear()
         self.Figure_Widget.setYRange(np.min(self.y),np.max(self.y))
         if self.k == 0 :
-            self.Figure_Widget.setXRange( 0  , self.scaling_factor )
-        elif self.k >= 700 and self.status_slider == 0  :
-            self.Figure_Widget.setXRange( self.scaling_factor_i  , self.scaling_factor )
-            self.scaling_factor = self.scaling_factor + 10
-            self.scaling_factor_i = self.scaling_factor_i + 10
+            self.Figure_Widget.setXRange(0, self.scaling_factor)
+        elif self.k >= 600 and self.status_slider == 0  :
+            self.Figure_Widget.setXRange(self.scaling_factor_i, self.scaling_factor)
+            self.scaling_factor = self.scaling_factor + 10 + int(speed/10)
+            self.scaling_factor_i = self.scaling_factor_i + 10 + int(speed/10)
         elif self.size > 0:
-            self.Figure_Widget.setXRange( (self.int + self.size ) , (self.fin +self.size) )
-
-        self.plt = self.Figure_Widget.plot( self.x[0:self.k],self.y[0:self.k], pen=pencolor)
+            self.Figure_Widget.setXRange((self.int + self.size) , (self.fin +self.size))
+        self.plt = self.Figure_Widget.plot(self.x[0:self.k], self.y[0:self.k], pen=pencolor)
         self.Figure_Slider.setMaximum(self.scaling_factor)
-        if self.status_zoom == 0 and  self.status_slider == 0  :
-            self.k = self.k +10
-
-        print(self.k)
+        if self.status_zoom == 0 and self.status_slider == 0  :
+            self.k = self.k + 10 + int(speed/10)
+        #print(speed)
+        #print(self.k)
         if self.k > np.max(self.x):
             self.timer.stop()
             self.k= 0
-            self.scaling_factor = 700
+            self.scaling_factor = 600
             self.scaling_factor_i= 0
             self.zoom = 1
 
@@ -379,7 +375,7 @@ class Ui_MainWindow(object):
         print("spectrogram on")
         speco = matplotlib.pyplot.specgram(ynew)
         plt.savefig('foo.png')
-        matplotlib.pyplot.show()
+        #matplotlib.pyplot.show()
         
         
                  
