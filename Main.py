@@ -12,7 +12,7 @@ from asyncio.windows_events import NULL
 import imghdr
 from turtle import pen, pencolor, rt
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QInputDialog, QAction, QTextEdit, QFontDialog, QColorDialog, QGridLayout
+from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QInputDialog, QAction, QTextEdit, QFontDialog, QColorDialog, QGridLayout,QLineEdit,QHBoxLayout
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import QIcon, QGuiApplication
 from PyQt5.QtPrintSupport import QPrintDialog, QPrinter, QPrintPreviewDialog
@@ -38,8 +38,6 @@ from random import randint
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         self.int=0
-        global renameboolean
-        renameboolean=False
         self.scaling_factor= 1000
         self.scaling_factor_i= 0
         self.k = 0
@@ -119,6 +117,11 @@ class Ui_MainWindow(object):
         self.Figure_Slider.setGeometry(QtCore.QRect(20, 340, 651, 22))
         self.Figure_Slider.setOrientation(QtCore.Qt.Horizontal)
         self.Figure_Slider.setObjectName("Figure_Slider")
+        self.Figure_Slider.setMinimum(0)
+        self.Figure_Slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.Figure_Slider.setTickInterval(10)
+        self.Figure_Slider.sliderMoved.connect(self.ChangeValue)
+        self.Figure_Slider.valueChanged.connect(self.ChangeValue)
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setGeometry(QtCore.QRect(542, 400, 131, 22))
         self.lineEdit.setObjectName("lineEdit")
@@ -306,19 +309,35 @@ class Ui_MainWindow(object):
             self.scaling_factor_i= 0
             self.zoom = 1
 
-
+    def SignalNames(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.chan1name = str(self.lineEdit.text())
+        self.chan2name = str(self.lineEdit_2.text())
+        self.chan3name = str(self.lineEdit_3.text())
+        self.comboBox_3.setItemText(0, _translate("MainWindow", self.chan1name))
+        self.comboBox_3.setItemText(1, _translate("MainWindow", self.chan2name))
+        self.comboBox_3.setItemText(2, _translate("MainWindow", self.chan2name))
+    
+    
+    def ChangeValue(self):
+        self.status_slider = 1
+        #if not self.filename == '':
+        self.timer.stop()
+        self.size = self.Figure_Slider.value()
+        self.update_plot()
+    
+    
     def pausebutton(self):
         self.timer.stop()
 
     def SignalNames(self):
-        renameboolean=True
-        print('sig name int')
-        global chan1name
-        global chan2name
-        global chan3name
-        chan1name = str(self.lineEdit.text())
-        chan2name = str(self.lineEdit_2.text())
-        chan3name = str(self.lineEdit_3.text())
+        _translate = QtCore.QCoreApplication.translate
+        self.chan1name = str(self.lineEdit.text())
+        self.chan2name = str(self.lineEdit_2.text())
+        self.chan3name = str(self.lineEdit_3.text())
+        self.comboBox_3.setItemText(0, _translate("MainWindow", self.chan1name))
+        self.comboBox_3.setItemText(1, _translate("MainWindow", self.chan2name))
+        self.comboBox_3.setItemText(2, _translate("MainWindow", self.chan3name))
     
     def ZoomIn(self):
         self.timer.stop()
@@ -381,6 +400,19 @@ class Ui_MainWindow(object):
                  
                
     def playbutton(self):
+        signal = scipy.io.loadmat(str(fname[0]))
+        xaxis=signal['val']
+        xnew=np.array(xaxis)
+        xnew=xnew.flatten()
+        xnewer=np.arange(1,len(xnew)+1,1)
+        yaxis=signal['val']
+        global ynew
+        ynew=np.array(yaxis)
+        ynew=ynew.flatten()
+        self.x = xnewer
+        self.y = ynew
+        self.status_zoom = 0
+        self.status_slider = 0
         self.update_plot()
         self.timer = QtCore.QTimer()
         self.timer.setInterval(100)
@@ -417,19 +449,11 @@ class Ui_MainWindow(object):
         self.SelectChannel_ComboBox.setItemText(1, _translate("MainWindow", "Channel 2"))
         self.SelectChannel_ComboBox.setItemText(2, _translate("MainWindow", "Channel 3"))
         self.Figure_groupBox.setTitle(_translate("MainWindow", "Figure"))
+        self.comboBox_3.setItemText(0, _translate("MainWindow", "Channel 1"))
+        self.comboBox_3.setItemText(1, _translate("MainWindow", "Channel 2"))
+        self.comboBox_3.setItemText(2, _translate("MainWindow", "Channel 3"))
         self.Spectrogram_GroupBox.setTitle(_translate("MainWindow", "Spectrogram"))
         self.SpectrogramSelectChannel_Label.setText(_translate("MainWindow", "Select channel"))
-        if renameboolean==False:
-            ch1n = str("Channel 1")
-            ch2n = str("Channel 2")
-            ch3n = str("Channel 3")
-        elif renameboolean==True:
-            ch1n = chan1name
-            ch2n = chan2name
-            ch3n = chan3name
-        self.comboBox_3.setItemText(0, _translate("MainWindow", ch1n))
-        self.comboBox_3.setItemText(1, _translate("MainWindow", ch2n))
-        self.comboBox_3.setItemText(2, _translate("MainWindow", ch3n))
         self.ZoomOut_PushButton.setText(_translate("MainWindow", "Zoom out"))
         self.SignalColor_ComboBox.setItemText(0, _translate("MainWindow", "Red"))
         self.SignalColor_ComboBox.setItemText(1, _translate("MainWindow", "Green"))
