@@ -10,6 +10,7 @@
 
 from asyncio.windows_events import NULL
 import imghdr
+from re import X
 from turtle import pen, pencolor, rt
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog, QInputDialog, QAction, QTextEdit, QFontDialog, QColorDialog, QGridLayout,QLineEdit,QHBoxLayout
@@ -217,7 +218,7 @@ class Ui_MainWindow(object):
         self.comboBox_3.addItem("")
         self.comboBox_3.addItem("")
         self.comboBox_3.addItem("")
-        self.Spectrogram_Widget = PlotWidget(self.Spectrogram_GroupBox)
+        self.Spectrogram_Widget = pyqtgraph.GraphicsLayoutWidget(self.Spectrogram_GroupBox)
         self.Spectrogram_Widget.setGeometry(QtCore.QRect(0, 20, 381, 211))
         self.Spectrogram_Widget.setObjectName("Spectrogram_Widget")
         self.ZoomOut_PushButton = QtWidgets.QPushButton(self.centralwidget)
@@ -253,6 +254,8 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.pencolors_channels=['r','r','r']
+        self.comboBox_3.activated.connect(self.spectrogram) 
 
 
     def browsefiles(self):
@@ -267,8 +270,26 @@ class Ui_MainWindow(object):
         global ynew
         ynew=np.array(yaxis)
         ynew=ynew.flatten()
-        self.x = xnewer
-        self.y = ynew
+        global xxis1
+        global yxis1
+        global xxis2
+        global yxis2
+        global xxis
+        global yxis
+        xxis1 = np.arange(1,2,1)
+        yxis1 = np.arange(1,2,1)
+        xxis2 = np.arange(1,2,1)
+        yxis2 = np.arange(1,2,1)
+        if int(self.SelectChannel_ComboBox.currentIndex()) == 0:
+            xxis = xnewer
+            yxis = ynew
+        elif int(self.SelectChannel_ComboBox.currentIndex()) == 1:
+            xxis1 = xnewer
+            yxis1 = ynew
+        elif int(self.SelectChannel_ComboBox.currentIndex()) == 2:
+            xxis2 = xnewer
+            yxis2 = ynew
+        
         self.status_zoom = 0
         self.status_slider = 0
         self.update_plot()
@@ -279,15 +300,21 @@ class Ui_MainWindow(object):
         
     def update_plot(self):
         speed = int(self.CineSpeed_Slider.value())
-        currentcolor = str(self.SignalColor_ComboBox.currentText())
-        if currentcolor == 'Red':
-            pencolor = 'r'
-        elif currentcolor == 'Green':
-            pencolor = 'g'      
-        elif currentcolor == 'Blue':
-            pencolor = 'b'
-        #self.Figure_Widget.clear()
-        self.Figure_Widget.setYRange(np.min(self.y),np.max(self.y))
+        self.pencolors=['r','g','b']
+        #currentcolor = str(self.SignalColor_ComboBox.currentText())
+        global colorindex
+        if self.SelectChannel_ComboBox.currentIndex()==0:
+            colorindex = int(self.SignalColor_ComboBox.currentIndex())
+            self.pencolors_channels[0]=self.pencolors[colorindex]
+        elif self.SelectChannel_ComboBox.currentIndex()==1:
+            colorindex = int(self.SignalColor_ComboBox.currentIndex())
+            self.pencolors_channels[1]=self.pencolors[colorindex]      
+        elif self.SelectChannel_ComboBox.currentIndex()==2:
+            colorindex = int(self.SignalColor_ComboBox.currentIndex())
+            self.pencolors_channels[2]=self.pencolors[colorindex]
+            #self.pencolors_channels[2]=self.pencolors[int(self.SignalColor_ComboBox.currentIndex())]
+        self.Figure_Widget.clear()
+        self.Figure_Widget.setYRange(np.min(yxis),np.max(yxis))
         if self.k == 0 :
             self.Figure_Widget.setXRange(0, self.scaling_factor)
         elif self.k >= 600 and self.status_slider == 0  :
@@ -296,13 +323,13 @@ class Ui_MainWindow(object):
             self.scaling_factor_i = self.scaling_factor_i + 10 + int(speed/10)
         elif self.size > 0:
             self.Figure_Widget.setXRange((self.int + self.size) , (self.fin +self.size))
-        self.plt = self.Figure_Widget.plot(self.x[0:self.k], self.y[0:self.k], pen=pencolor)
+        self.plt1 = self.Figure_Widget.plot(xxis[0:self.k], yxis[0:self.k], pen=self.pencolors_channels[0])
+        self.plt2 = self.Figure_Widget.plot(xxis1[0:self.k], yxis1[0:self.k], pen=self.pencolors_channels[1])
+        self.plt3 = self.Figure_Widget.plot(xxis2[0:self.k], yxis2[0:self.k], pen=self.pencolors_channels[2])
         self.Figure_Slider.setMaximum(self.scaling_factor)
         if self.status_zoom == 0 and self.status_slider == 0  :
             self.k = self.k + 10 + int(speed/10)
-        #print(speed)
-        #print(self.k)
-        if self.k > np.max(self.x):
+        if self.k > np.max(xxis):
             self.timer.stop()
             self.k= 0
             self.scaling_factor = 600
@@ -366,6 +393,7 @@ class Ui_MainWindow(object):
         self.update_plot()
     
    
+
      
 
     def exportfiles(self):
@@ -383,21 +411,30 @@ class Ui_MainWindow(object):
                  signalexporter.export('temp1.png')
                  pdf.image(str("temp1.png"))
                  pdf.cell(200, 10, txt = "Spectrogram", ln = 3, align = 'L')
-                 spectroexporter = pyqtgraph.exporters.ImageExporter(self.Figure_Widget.plotItem)
+                 spectroexporter = pyqtgraph.exporters.ImageExporter(self.Spectrogram_Widget.scene())
                  spectroexporter.parameters()['width'] = 300
                  spectroexporter.export('temp2.png')
-                 pdf.image(str("foo.png"))
+                 pdf.image(str("temp2.png"))
                  pdf.output(str(pdfname[0]))
     
     def spectrogram(self):
-        signal = scipy.io.loadmat(str(fname[0]))
-        print("spectrogram on")
-        speco = matplotlib.pyplot.specgram(ynew)
-        plt.savefig('foo.png')
-        #matplotlib.pyplot.show()
-        
-        
-                 
+        self.Spectrogram_Widget.clear()
+        f, t, spectrogram = scipy.signal.spectrogram(ynew)
+        p1 = self.Spectrogram_Widget.addPlot()
+        img = pyqtgraph.ImageItem()
+        p1.addItem(img)
+        hist = pyqtgraph.HistogramLUTItem()
+        hist.setImageItem(img)
+        hist.gradient.restoreState(
+        {'mode': 'rgb',
+         'ticks': [(0.5, (0, 255, 0, 255)),
+                   (1.0, (255, 0, 0, 255)),
+                   (0.0, (0, 0, 112, 255))]})
+        self.Spectrogram_Widget.addItem(hist)
+        hist.setLevels(np.min(spectrogram), np.max(spectrogram))
+        img.setImage(spectrogram)
+        img.scale(t[-1]/np.size(spectrogram, axis=1), f[-1]/np.size(spectrogram, axis=0))
+                   
                
     def playbutton(self):
         signal = scipy.io.loadmat(str(fname[0]))
@@ -409,8 +446,21 @@ class Ui_MainWindow(object):
         global ynew
         ynew=np.array(yaxis)
         ynew=ynew.flatten()
-        self.x = xnewer
-        self.y = ynew
+        if int(self.SelectChannel_ComboBox.currentIndex()) == 0:
+            global xxis
+            global yxis
+            xxis = xnewer
+            yxis = ynew
+        elif int(self.SelectChannel_ComboBox.currentIndex()) == 1:
+            global xxis1
+            global yxis1
+            xxis1 = xnewer
+            yxis1 = ynew
+        elif int(self.SelectChannel_ComboBox.currentIndex()) == 2:
+            global xxis2
+            global yxis2
+            xxis2 = xnewer
+            yxis2 = ynew
         self.status_zoom = 0
         self.status_slider = 0
         self.update_plot()
@@ -418,7 +468,6 @@ class Ui_MainWindow(object):
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.update_plot)
         self.timer.start()
-        print("play button pressed")
 
 
     def retranslateUi(self, MainWindow):
