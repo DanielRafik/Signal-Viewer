@@ -45,6 +45,10 @@ class Ui_MainWindow(object):
         self.zoom = 1
         self.fin = 700
         self.size=0
+        global ChannelTwoSelected
+        global ChannelThreeSelected
+        self.ChannelTwoSelected = False
+        self.ChannelThreeSelected = False
         pyqtgraph.setConfigOptions(antialias=True)
         self.fig1 , self.ax = plt.subplots()
         MainWindow.setObjectName("MainWindow")
@@ -150,7 +154,7 @@ class Ui_MainWindow(object):
         self.BrowseFiles_PushButton.setFont(font)
         self.BrowseFiles_PushButton.setObjectName("BrowseFiles_PushButton")
         self.BrowseFiles_PushButton.clicked.connect(self.browsefiles)
-        self.BrowseFiles_PushButton.clicked.connect(self.spectrogram)
+        #self.BrowseFiles_PushButton.clicked.connect(self.spectrogram)
         self.CineSpeed_Slider = QtWidgets.QSlider(self.centralwidget)
         self.CineSpeed_Slider.setValue(0)
         self.CineSpeed_Slider.setGeometry(QtCore.QRect(140, 380, 91, 22))
@@ -211,6 +215,10 @@ class Ui_MainWindow(object):
         self.SpectrogramSelectChannel_Label = QtWidgets.QLabel(self.Spectrogram_GroupBox)
         self.SpectrogramSelectChannel_Label.setGeometry(QtCore.QRect(80, 230, 91, 41))
         self.SpectrogramSelectChannel_Label.setObjectName("SpectrogramSelectChannel_Label")
+        self.ShowSpectrogram = QtWidgets.QPushButton(self.Spectrogram_GroupBox)
+        self.ShowSpectrogram.setGeometry(QtCore.QRect(410, 120, 71, 28))
+        self.ShowSpectrogram.setText('Show')
+        self.ShowSpectrogram.clicked.connect(self.spectrogram)
         self.comboBox_3 = QtWidgets.QComboBox(self.Spectrogram_GroupBox)
         self.comboBox_3.setGeometry(QtCore.QRect(170, 240, 151, 21))
         self.comboBox_3.setEditable(False)
@@ -278,19 +286,17 @@ class Ui_MainWindow(object):
         global yxis2
         global xxis
         global yxis
-        xxis1 = np.arange(1,2,1)
-        yxis1 = np.arange(1,2,1)
-        xxis2 = np.arange(1,2,1)
-        yxis2 = np.arange(1,2,1)
         if int(self.SelectChannel_ComboBox.currentIndex()) == 0:
             xxis = xnewer
             yxis = ynew
         elif int(self.SelectChannel_ComboBox.currentIndex()) == 1:
             xxis1 = xnewer
             yxis1 = ynew
+            self.ChannelTwoSelected = True
         elif int(self.SelectChannel_ComboBox.currentIndex()) == 2:
             xxis2 = xnewer
             yxis2 = ynew
+            self.ChannelThreeSelected=True
         
         self.status_zoom = 0
         self.status_slider = 0
@@ -325,9 +331,12 @@ class Ui_MainWindow(object):
             self.scaling_factor_i = self.scaling_factor_i + 10 + int(speed/10)
         elif self.size > 0:
             self.Figure_Widget.setXRange((self.int + self.size) , (self.fin +self.size))
-        self.plt1 = self.Figure_Widget.plot(xxis[0:self.k], yxis[0:self.k], pen=self.pencolors_channels[0])
-        self.plt2 = self.Figure_Widget.plot(xxis1[0:self.k], yxis1[0:self.k], pen=self.pencolors_channels[1])
-        self.plt3 = self.Figure_Widget.plot(xxis2[0:self.k], yxis2[0:self.k], pen=self.pencolors_channels[2])
+        if self.Channel1_CheckBox.isChecked() == False:
+            self.plt1 = self.Figure_Widget.plot(xxis[0:self.k], yxis[0:self.k], pen=self.pencolors_channels[0])
+        if self.ChannelTwoSelected==True and self.Channel2_CheckBox.isChecked() == False:
+            self.plt2 = self.Figure_Widget.plot(xxis1[0:self.k], yxis1[0:self.k], pen=self.pencolors_channels[1])
+        if self.ChannelThreeSelected==True and self.Channel3_CheckBox.isChecked() == False:
+            self.plt3 = self.Figure_Widget.plot(xxis2[0:self.k], yxis2[0:self.k], pen=self.pencolors_channels[2])
         self.Figure_Slider.setMaximum(self.scaling_factor)
         if self.status_zoom == 0 and self.status_slider == 0  :
             self.k = self.k + 10 + int(speed/10)
@@ -337,7 +346,6 @@ class Ui_MainWindow(object):
             self.scaling_factor = 600
             self.scaling_factor_i= 0
             self.zoom = 1
-        self.Check_Hidden()
 
     def SignalNames(self):
         _translate = QtCore.QCoreApplication.translate
@@ -394,21 +402,7 @@ class Ui_MainWindow(object):
             self.zoom = self.zoom * 2
             self.fin = self.fin * self.zoom
         self.update_plot()
-    
-    def Check_Hidden(self):
-        hidden1 = self.Channel1_CheckBox.isChecked()
-        hidden2 = self.Channel2_CheckBox.isChecked()
-        hidden3 = self.Channel3_CheckBox.isChecked()
 
-        if hidden1 == True:
-            self.Figure_Widget.clear()
-            self.pausebutton()
-        if hidden2 == True:
-            self.Figure_Widget.clear()
-            self.pausebutton()
-        if hidden3 == True:
-            self.Figure_Widget.clear()
-            self.pausebutton()
      
 
     def exportfiles(self):
@@ -433,22 +427,55 @@ class Ui_MainWindow(object):
                  pdf.output(str(pdfname[0]))
     
     def spectrogram(self):
-        self.Spectrogram_Widget.clear()
-        f, t, spectrogram = scipy.signal.spectrogram(ynew)
-        p1 = self.Spectrogram_Widget.addPlot()
-        img = pyqtgraph.ImageItem()
-        p1.addItem(img)
-        hist = pyqtgraph.HistogramLUTItem()
-        hist.setImageItem(img)
-        hist.gradient.restoreState(
-        {'mode': 'rgb',
-         'ticks': [(0.5, (0, 255, 0, 255)),
-                   (1.0, (255, 0, 0, 255)),
-                   (0.0, (0, 0, 112, 255))]})
-        self.Spectrogram_Widget.addItem(hist)
-        hist.setLevels(np.min(spectrogram), np.max(spectrogram))
-        img.setImage(spectrogram)
-        img.scale(t[-1]/np.size(spectrogram, axis=1), f[-1]/np.size(spectrogram, axis=0))
+        if self.comboBox_3.currentIndex() == 0:
+            self.Spectrogram_Widget.clear()
+            f, t, spectrogram = scipy.signal.spectrogram(yxis)
+            p1 = self.Spectrogram_Widget.addPlot()
+            img = pyqtgraph.ImageItem()
+            p1.addItem(img)
+            hist = pyqtgraph.HistogramLUTItem()
+            hist.setImageItem(img)
+            hist.gradient.restoreState(
+            {'mode': 'rgb',
+            'ticks': [(0.5, (194, 0, 80, 255)),
+                      (1.0, (254, 233, 54, 255)),
+                      (0.0, (0, 0, 28, 255))]})
+            self.Spectrogram_Widget.addItem(hist)
+            hist.setLevels(np.min(spectrogram), np.max(spectrogram))
+            img.setImage(spectrogram)
+        if self.comboBox_3.currentIndex() == 1:
+            self.Spectrogram_Widget.clear()
+            f, t, spectrogram = scipy.signal.spectrogram(yxis1)
+            p1 = self.Spectrogram_Widget.addPlot()
+            img = pyqtgraph.ImageItem()
+            p1.addItem(img)
+            hist = pyqtgraph.HistogramLUTItem()
+            hist.setImageItem(img)
+            hist.gradient.restoreState(
+            {'mode': 'rgb',
+            'ticks': [(0.5, (194, 0, 80, 255)),
+                      (1.0, (254, 233, 54, 255)),
+                      (0.0, (0, 0, 28, 255))]})
+            self.Spectrogram_Widget.addItem(hist)
+            hist.setLevels(np.min(spectrogram), np.max(spectrogram))
+            img.setImage(spectrogram)
+        if self.comboBox_3.currentIndex() == 2:
+            self.Spectrogram_Widget.clear()
+            f, t, spectrogram = scipy.signal.spectrogram(yxis2)
+            p1 = self.Spectrogram_Widget.addPlot()
+            img = pyqtgraph.ImageItem()
+            p1.addItem(img)
+            hist = pyqtgraph.HistogramLUTItem()
+            hist.setImageItem(img)
+            hist.gradient.restoreState(
+             {'mode': 'rgb',
+            'ticks': [(0.5, (194, 0, 80, 255)),
+                      (1.0, (254, 233, 54, 255)),
+                      (0.0, (0, 0, 28, 255))]})
+            self.Spectrogram_Widget.addItem(hist)
+            hist.setLevels(np.min(spectrogram), np.max(spectrogram))
+            img.setImage(spectrogram)
+        #img.scale(t[-1]/np.size(spectrogram, axis=1), f[-1]/np.size(spectrogram, axis=0))
                    
                
     def playbutton(self):
