@@ -259,6 +259,8 @@ class Ui_MainWindow(object):
 
 
     def browsefiles(self):
+        global selected
+        selected = str(self.SelectChannel_ComboBox.currentText())
         global fname
         fname=QFileDialog.getOpenFileName(None, str("Browse Files"), None, str("Signal Files (*.mat)"))
         signal = scipy.io.loadmat(str(fname[0]))
@@ -335,6 +337,7 @@ class Ui_MainWindow(object):
             self.scaling_factor = 600
             self.scaling_factor_i= 0
             self.zoom = 1
+        self.Check_Hidden()
 
     def SignalNames(self):
         _translate = QtCore.QCoreApplication.translate
@@ -392,8 +395,20 @@ class Ui_MainWindow(object):
             self.fin = self.fin * self.zoom
         self.update_plot()
     
-   
+    def Check_Hidden(self):
+        hidden1 = self.Channel1_CheckBox.isChecked()
+        hidden2 = self.Channel2_CheckBox.isChecked()
+        hidden3 = self.Channel3_CheckBox.isChecked()
 
+        if hidden1 == True:
+            self.Figure_Widget.clear()
+            self.pausebutton()
+        if hidden2 == True:
+            self.Figure_Widget.clear()
+            self.pausebutton()
+        if hidden3 == True:
+            self.Figure_Widget.clear()
+            self.pausebutton()
      
 
     def exportfiles(self):
