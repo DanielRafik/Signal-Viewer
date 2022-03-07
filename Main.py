@@ -154,7 +154,6 @@ class Ui_MainWindow(object):
         self.BrowseFiles_PushButton.setFont(font)
         self.BrowseFiles_PushButton.setObjectName("BrowseFiles_PushButton")
         self.BrowseFiles_PushButton.clicked.connect(self.browsefiles)
-        #self.BrowseFiles_PushButton.clicked.connect(self.spectrogram)
         self.CineSpeed_Slider = QtWidgets.QSlider(self.centralwidget)
         self.CineSpeed_Slider.setValue(0)
         self.CineSpeed_Slider.setGeometry(QtCore.QRect(140, 380, 91, 22))
@@ -309,7 +308,6 @@ class Ui_MainWindow(object):
     def update_plot(self):
         speed = int(self.CineSpeed_Slider.value())
         self.pencolors=['r','g','b']
-        #currentcolor = str(self.SignalColor_ComboBox.currentText())
         global colorindex
         if self.SelectChannel_ComboBox.currentIndex()==0:
             colorindex = int(self.SignalColor_ComboBox.currentIndex())
@@ -320,7 +318,6 @@ class Ui_MainWindow(object):
         elif self.SelectChannel_ComboBox.currentIndex()==2:
             colorindex = int(self.SignalColor_ComboBox.currentIndex())
             self.pencolors_channels[2]=self.pencolors[colorindex]
-            #self.pencolors_channels[2]=self.pencolors[int(self.SignalColor_ComboBox.currentIndex())]
         self.Figure_Widget.clear()
         self.Figure_Widget.setYRange(np.min(yxis),np.max(yxis))
         if self.k == 0 :
@@ -359,7 +356,6 @@ class Ui_MainWindow(object):
     
     def ChangeValue(self):
         self.status_slider = 1
-        #if not self.filename == '':
         self.timer.stop()
         self.size = self.Figure_Slider.value()
         self.update_plot()
