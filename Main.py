@@ -427,56 +427,33 @@ class Ui_MainWindow(object):
                  pdf.output(str(pdfname[0]))
     
     def spectrogram(self):
+        self.check_comboBox_3_index()
+        self.Spectrogram_Widget.clear()
+        f, t, spectrogram = scipy.signal.spectrogram(yfinal)
+        p1 = self.Spectrogram_Widget.addPlot()
+        img = pyqtgraph.ImageItem()
+        p1.addItem(img)
+        hist = pyqtgraph.HistogramLUTItem()
+        hist.setImageItem(img)
+        hist.gradient.restoreState(
+        {'mode': 'rgb',
+        'ticks': [(0.5, (194, 0, 80, 255)),
+                    (1.0, (254, 233, 54, 255)),
+                    (0.0, (0, 0, 28, 255))]})
+        self.Spectrogram_Widget.addItem(hist)
+        hist.setLevels(np.min(spectrogram), np.max(spectrogram))
+        img.setImage(spectrogram)
+       
+
+
+    def check_comboBox_3_index(self):
+        global yfinal
         if self.comboBox_3.currentIndex() == 0:
-            self.Spectrogram_Widget.clear()
-            f, t, spectrogram = scipy.signal.spectrogram(yxis)
-            p1 = self.Spectrogram_Widget.addPlot()
-            img = pyqtgraph.ImageItem()
-            p1.addItem(img)
-            hist = pyqtgraph.HistogramLUTItem()
-            hist.setImageItem(img)
-            hist.gradient.restoreState(
-            {'mode': 'rgb',
-            'ticks': [(0.5, (194, 0, 80, 255)),
-                      (1.0, (254, 233, 54, 255)),
-                      (0.0, (0, 0, 28, 255))]})
-            self.Spectrogram_Widget.addItem(hist)
-            hist.setLevels(np.min(spectrogram), np.max(spectrogram))
-            img.setImage(spectrogram)
+                yfinal =yxis
         if self.comboBox_3.currentIndex() == 1:
-            self.Spectrogram_Widget.clear()
-            f, t, spectrogram = scipy.signal.spectrogram(yxis1)
-            p1 = self.Spectrogram_Widget.addPlot()
-            img = pyqtgraph.ImageItem()
-            p1.addItem(img)
-            hist = pyqtgraph.HistogramLUTItem()
-            hist.setImageItem(img)
-            hist.gradient.restoreState(
-            {'mode': 'rgb',
-            'ticks': [(0.5, (194, 0, 80, 255)),
-                      (1.0, (254, 233, 54, 255)),
-                      (0.0, (0, 0, 28, 255))]})
-            self.Spectrogram_Widget.addItem(hist)
-            hist.setLevels(np.min(spectrogram), np.max(spectrogram))
-            img.setImage(spectrogram)
+                yfinal =yxis1
         if self.comboBox_3.currentIndex() == 2:
-            self.Spectrogram_Widget.clear()
-            f, t, spectrogram = scipy.signal.spectrogram(yxis2)
-            p1 = self.Spectrogram_Widget.addPlot()
-            img = pyqtgraph.ImageItem()
-            p1.addItem(img)
-            hist = pyqtgraph.HistogramLUTItem()
-            hist.setImageItem(img)
-            hist.gradient.restoreState(
-             {'mode': 'rgb',
-            'ticks': [(0.5, (194, 0, 80, 255)),
-                      (1.0, (254, 233, 54, 255)),
-                      (0.0, (0, 0, 28, 255))]})
-            self.Spectrogram_Widget.addItem(hist)
-            hist.setLevels(np.min(spectrogram), np.max(spectrogram))
-            img.setImage(spectrogram)
-        #img.scale(t[-1]/np.size(spectrogram, axis=1), f[-1]/np.size(spectrogram, axis=0))
-                   
+                yfinal =yxis2 
                
     def playbutton(self):
         signal = scipy.io.loadmat(str(fname[0]))
