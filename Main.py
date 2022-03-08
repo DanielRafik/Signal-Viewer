@@ -34,6 +34,7 @@ import h5py
 import time
 from matplotlib.animation import FuncAnimation
 from random import randint
+from extra import *
 
 
 class Ui_MainWindow(object):
@@ -127,6 +128,15 @@ class Ui_MainWindow(object):
         self.Figure_Slider.setTickInterval(10)
         self.Figure_Slider.sliderMoved.connect(self.ChangeValue)
         self.Figure_Slider.valueChanged.connect(self.ChangeValue)
+        self.Figure_vertical_Slider = QtWidgets.QSlider(self.centralwidget)
+        self.Figure_vertical_Slider.setGeometry(QtCore.QRect(0, 70, 20, 251))
+        self.Figure_vertical_Slider.setOrientation(QtCore.Qt.Vertical)
+        self.Figure_vertical_Slider.setObjectName("Figure_vertical_Slider")
+        self.Figure_vertical_Slider.setMinimum(0)
+        self.Figure_vertical_Slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.Figure_vertical_Slider.setTickInterval(10)
+        self.Figure_vertical_Slider.sliderMoved.connect(self.Change_vertical_value)
+        self.Figure_vertical_Slider.valueChanged.connect(self.Change_vertical_value)
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setGeometry(QtCore.QRect(542, 400, 131, 22))
         self.lineEdit.setObjectName("lineEdit")
@@ -292,6 +302,7 @@ class Ui_MainWindow(object):
             xxis1 = xnewer
             yxis1 = ynew
             self.ChannelTwoSelected = True
+            print('alo')
         elif int(self.SelectChannel_ComboBox.currentIndex()) == 2:
             xxis2 = xnewer
             yxis2 = ynew
@@ -353,6 +364,11 @@ class Ui_MainWindow(object):
         self.comboBox_3.setItemText(1, _translate("MainWindow", self.chan2name))
         self.comboBox_3.setItemText(2, _translate("MainWindow", self.chan2name))
     
+    def Change_vertical_value(self):
+        self.status_vertical_slider = 1
+        self.timer.stop()
+        self.vertical_size = self.Figure_vertical_Slider.value()
+        self.update_plot()
     
     def ChangeValue(self):
         self.status_slider = 1
