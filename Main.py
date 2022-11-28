@@ -27,7 +27,7 @@ from collections import namedtuple
 import pyqtgraph.exporters
 import scipy.io
 from scipy import signal
-import h5py
+# import h5py
 import time
 from matplotlib.animation import FuncAnimation
 from random import randint
